@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SaviorGuess</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+:root {--bg-card: rgba(0,0,0,0.45);--text:white;--accent:#6366f1;}
+.light {--bg-card: rgba(255,255,255,0.95);--text:#111827;}
+.theme-blue{--accent:#2563eb}.theme-red{--accent:#ef4444}.theme-green{--accent:#22c55e}.theme-purple{--accent:#7c3aed}.theme-orange{--accent:#f97316}
+body{margin:0;font-family:Arial;background:linear-gradient(-45deg,#4f46e5,#7c3aed,#22c55e,#ef4444);background-size:400% 400%;animation:bg 15s infinite;color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center}
+@keyframes bg{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.card{background:var(--bg-card);padding:20px;border-radius:16px;width:100%;max-width:450px}
+h1{text-align:center}
+input,select,button{width:100%;padding:10px;margin-top:8px;border-radius:8px;border:none;font-size:16px}
+input,select{color:black}button{font-weight:bold;cursor:pointer}
+.primary{background:var(--accent);color:white}.success{background:#22c55e;color:black}.danger{background:#ef4444;color:white}
+.icons{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}.icon{text-align:center;font-size:24px;opacity:.6;cursor:pointer}.icon.selected{opacity:1;transform:scale(1.2)}
+.game-image{width:100%;height:200px;object-fit:cover;border-radius:12px;margin-top:10px}
+.hint{background:white;color:black;padding:10px;border-radius:8px;margin-top:10px;font-weight:bold}
+.message{text-align:center;margin-top:8px;font-weight:bold}.top{display:flex;justify-content:space-between;font-size:14px;font-weight:bold}
+</style>
+</head>
+<body class="dark theme-blue">
+<div class="card" id="app"></div>
+<script>
+const DIFFICULTIES={Easy:{time:30,points:10},Medium:{time:25,points:15},Hard:{time:20,points:25},SaviorPro:{time:15,points:40},ExpertSavior:{time:10,points:60}};
+const ICONS=["🧠","🔥","🎯","⚡","👑","🎮","🛡️","🚀"];
+const GAMES=[{answer:"overwatch",image:"https://upload.wikimedia.org/wikipedia/en/5/51/Overwatch_cover_art.jpg",hints:["Team shooter","Heroes","Blizzard","Payload mode","Tracer"]},{answer:"mortal kombat",image:"https://upload.wikimedia.org/wikipedia/en/9/9d/Mortal_Kombat_11.jpg",hints:["Fighting","Fatalities","Very violent","Finish Him","Scorpion"]},{answer:"rainbow six siege",image:"https://upload.wikimedia.org/wikipedia/en/4/47/Tom_Clancy%27s_Rainbow_Six_Siege_cover_art.jpg",hints:["Tactical shooter","Operators","Destructible walls","Ubisoft","Strategy"]}];
+let player="",icon="🧠",difficulty="Easy",speed=false,score=0,game=0,hint=0,time=30,timer=null,mode="dark",theme="theme-blue";
+const app=document.getElementById("app");
+function beep(f){const c=new AudioContext(),o=c.createOscillator(),g=c.createGain();o.connect(g);g.connect(c.destination);o.frequency.value=f;g.gain.value=.15;o.start();o.stop(c.currentTime+.2)}
+function applyTheme(){document.body.className=`${mode} ${theme}`}
+function setup(){app.innerHTML=`<h1>🎮 SaviorGuess</h1><input id='name' placeholder='Player name'><div class='icons'>${ICONS.map(i=>`<div class='icon'>${i}</div>`).join('')}</div><select id='themeSel'><option value='theme-blue'>Blue</option><option value='theme-red'>Red</option><option value='theme-green'>Green</option><option value='theme-purple'>Purple</option><option value='theme-orange'>Orange</option></select><button class='primary' id='modeBtn'>Toggle Light / Dark</button><button class='primary' id='start' disabled>Start Game</button>`;
+document.querySelectorAll('.icon').forEach(el=>{el.onclick=()=>{beep(440);document.querySelectorAll('.icon').forEach(i=>i.classList.remove('selected'));el.classList.add('selected');icon=el.textContent;};});document.querySelector('.icon').classList.add('selected');name.oninput=()=>start.disabled=!name.value.trim();start.onclick=()=>{player=name.value;beep(880);gameUI();};themeSel.onchange=e=>{theme=e.target.value;applyTheme();};modeBtn.onclick=()=>{mode=mode==='dark'?'light':'dark';applyTheme();};}
+function startTimer(){clearInterval(timer);time=DIFFICULTIES[difficulty].time;if(!speed)return;timer=setInterval(()=>{time--;if(time<=0)next(false);gameUI();},1000)}
+function next(win){clearInterval(timer);if(win)score+=DIFFICULTIES[difficulty].points+(speed?time:0);game=(game+1)%GAMES.length;hint=0;startTimer();gameUI(win?'✅ Correct!':'⏰ Time's up!')}
+function guess(){const g=document.getElementById('guess').value.toLowerCase();beep(440);if(g===GAMES[game].answer){beep(880);next(true)}else{beep(220);hint=Math.min(hint+1,GAMES[game].hints.length-1);gameUI('❌ Wrong guess')}}
+function gameUI(msg=''){applyTheme();app.innerHTML=`<h1>🎮 SaviorGuess</h1><div class='top'><span>${icon} ${player}</span><span>Score ${score}</span>${speed?`<span>⏱ ${time}s</span>`:''}</div><select id='diff'>${Object.keys(DIFFICULTIES).map(d=>`<option ${d===difficulty?'selected':''}>${d}</option>`).join('')}</select><button class='${speed?'danger':'primary'}' id='speedBtn'>${speed?'Disable':'Enable'} Speed Mode</button><img src='${GAMES[game].image}' class='game-image'><div class='hint'>Hint: ${GAMES[game].hints[hint]}</div><input id='guess' placeholder='Your guess'><button class='success' id='submit'>Submit Guess</button><div class='message'>${msg}</div>`;diff.onchange=e=>{difficulty=e.target.value;startTimer();};speedBtn.onclick=()=>{speed=!speed;startTimer();};submit.onclick=guess}
+setup();
+</script>
+</body>
+</html>
